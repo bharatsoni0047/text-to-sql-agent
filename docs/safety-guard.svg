@@ -1,39 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" width="900" height="330" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
-<rect width="900" height="330" rx="14" fill="#ffffff"/>
-<rect width="900" height="330" rx="14" fill="none" stroke="#e2e8f0"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 340" width="900" height="340" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<rect width="900" height="340" rx="14" fill="#ffffff"/>
+<rect width="900" height="340" rx="14" fill="none" stroke="#e2e8f0"/>
 <defs>
 <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
 <marker id="arrowG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
 <marker id="arrowR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
 </defs>
-<text x="24" y="34" font-size="16" font-weight="700" fill="#1f2933">The read-only guard</text>
-<text x="24" y="54" font-size="12" fill="#64748b">generation/sql.py - the one safety-critical file</text>
-<rect x="40" y="92" width="150" height="50" rx="9" fill="#fef3c7" stroke="#b45309"/>
-<text x="115.0" y="113.0" text-anchor="middle" font-size="13" font-weight="600" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Model writes</text>
-<text x="115.0" y="130.0" text-anchor="middle" font-size="10.5" fill="#64748b">any SQL string</text>
-<path d="M292,92 L354,117 L292,142 L230,117 Z" fill="#f1f5f9" stroke="#94a3b8"/>
-<text x="292" y="113" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Starts with</text>
-<text x="292" y="125" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">SELECT / WITH?</text>
-<path d="M462,92 L524,117 L462,142 L400,117 Z" fill="#f1f5f9" stroke="#94a3b8"/>
-<text x="462" y="113" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Only ONE</text>
-<text x="462" y="125" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">statement?</text>
-<path d="M632,92 L694,117 L632,142 L570,117 Z" fill="#f1f5f9" stroke="#94a3b8"/>
-<text x="632" y="113" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">No DDL / DML</text>
-<text x="632" y="125" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">keywords?</text>
-<path d="M190,117 L226,117" stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
-<path d="M354,117 L396,117" stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
-<path d="M524,117 L566,117" stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
-<path d="M694,117 L736,117" stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
-<rect x="736" y="92" width="124" height="50" rx="9" fill="#d1fae5" stroke="#059669"/>
-<text x="798.0" y="113.0" text-anchor="middle" font-size="13" font-weight="600" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Execute</text>
-<text x="798.0" y="130.0" text-anchor="middle" font-size="10.5" fill="#64748b">read-only</text>
-<path d="M292,142 L292,210" stroke="#dc2626" stroke-width="1.6" fill="none" marker-end="url(#arrowR)"/>
-<text x="318" y="168" text-anchor="middle" font-size="10" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#dc2626">no</text>
-<path d="M462,142 L462,210" stroke="#dc2626" stroke-width="1.6" fill="none" marker-end="url(#arrowR)"/>
-<text x="488" y="168" text-anchor="middle" font-size="10" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#dc2626">no</text>
-<path d="M632,142 L632,210" stroke="#dc2626" stroke-width="1.6" fill="none" marker-end="url(#arrowR)"/>
-<text x="658" y="168" text-anchor="middle" font-size="10" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#dc2626">no</text>
-<rect x="190" y="210" width="500" height="44" rx="9" fill="#fee2e2" stroke="#dc2626"/>
-<text x="440.0" y="236.5" text-anchor="middle" font-size="12" font-weight="600" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">BLOCKED  -  ValueError, query never reaches the database</text>
-<text x="450" y="288" text-anchor="middle" font-size="12" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Fail-closed: anything not provably a single read-only SELECT is refused. Blocking too much is the safe direction.</text>
+<text x="24" y="34" font-size="16" font-weight="700" fill="#1f2933">The safety check</text>
+<text x="24" y="54" font-size="12" fill="#64748b">Three questions asked of every database request, before it runs.</text>
+<rect x="40" y="96" width="154" height="50" rx="9" fill="#fef3c7" stroke="#b45309"/>
+<text x="117.0" y="117.0" text-anchor="middle" font-size="13" font-weight="600" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">The request</text>
+<text x="117.0" y="134.0" text-anchor="middle" font-size="10.5" fill="#64748b">written by the assistant</text>
+<path d="M296,96 L358,121 L296,146 L234,121 Z" fill="#f1f5f9" stroke="#94a3b8"/>
+<text x="296" y="117" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Is it only</text>
+<text x="296" y="129" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">reading data?</text>
+<path d="M466,96 L528,121 L466,146 L404,121 Z" fill="#f1f5f9" stroke="#94a3b8"/>
+<text x="466" y="117" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Is it just</text>
+<text x="466" y="129" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">one request?</text>
+<path d="M636,96 L698,121 L636,146 L574,121 Z" fill="#f1f5f9" stroke="#94a3b8"/>
+<text x="636" y="117" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Does it try to</text>
+<text x="636" y="129" text-anchor="middle" font-size="10" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">change anything?</text>
+<path d="M194,121 L230,121" stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+<path d="M358,121 L400,121" stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+<path d="M528,121 L570,121" stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+<path d="M698,121 L740,121" stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+<rect x="740" y="96" width="120" height="50" rx="9" fill="#d1fae5" stroke="#059669"/>
+<text x="800.0" y="117.0" text-anchor="middle" font-size="13" font-weight="600" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">Allowed</text>
+<text x="800.0" y="134.0" text-anchor="middle" font-size="10.5" fill="#64748b">read only</text>
+<path d="M296,146 L296,214" stroke="#dc2626" stroke-width="1.6" fill="none" marker-end="url(#arrowR)"/>
+<text x="320" y="172" text-anchor="middle" font-size="10" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#dc2626">no</text>
+<path d="M466,146 L466,214" stroke="#dc2626" stroke-width="1.6" fill="none" marker-end="url(#arrowR)"/>
+<text x="490" y="172" text-anchor="middle" font-size="10" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#dc2626">no</text>
+<path d="M636,146 L636,214" stroke="#dc2626" stroke-width="1.6" fill="none" marker-end="url(#arrowR)"/>
+<text x="660" y="172" text-anchor="middle" font-size="10" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#dc2626">no</text>
+<rect x="194" y="214" width="500" height="44" rx="9" fill="#fee2e2" stroke="#dc2626"/>
+<text x="444.0" y="240.5" text-anchor="middle" font-size="12" font-weight="600" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">REFUSED  -  the request never reaches your database</text>
+<text x="450" y="292" text-anchor="middle" font-size="12" font-weight="400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#1f2933">If there is any doubt at all, the answer is no. Being too careful is safe. Being not careful enough is not.</text>
 </svg>
