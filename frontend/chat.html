@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AgenticRAG</title>
+  <title>Text-to-SQL Agent</title>
   <style>
     * { box-sizing: border-box; margin: 0; }
     body {
@@ -38,11 +38,16 @@
     .bubble.assistant { align-self: flex-start; background: #f3f4f6; }
     footer { display: flex; gap: 8px; margin-top: 10px; }
     #message_input { flex: 1; }
+    textarea {
+      width: 100%; min-height: 130px; margin-top: 8px; padding: 9px 11px;
+      font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace;
+      border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>AgenticRAG</h1>
+    <h1>Text-to-SQL Agent</h1>
     <span id="status_text">checking...</span>
   </header>
 
@@ -79,6 +84,25 @@
       <input type="file" id="file_input" accept=".pdf,.docx,.xlsx,.xlsm,.txt">
       <button id="upload_button">Upload</button>
       <span class="note" id="upload_message"></span>
+    </div>
+  </details>
+
+  <details id="glossary_panel">
+    <summary>Your words (glossary, rules and notes)</summary>
+    <p class="note">
+      Teach it what your terms mean, so "revenue" means what <i>you</i> mean by it.
+      One entry per line. Lines starting with # are ignored.
+    </p>
+    <textarea id="glossary_text" spellcheck="false" placeholder="revenue = net amount after refunds, not gross
+active customer = someone who ordered in the last 90 days
+
+rule: always exclude cancelled orders
+note: the financial year starts in April"></textarea>
+    <div class="panel_row">
+      <button id="glossary_save">Save</button>
+      <input type="file" id="glossary_file" accept=".txt,.csv,.md">
+      <button id="glossary_upload">Upload a file</button>
+      <span class="note" id="glossary_message"></span>
     </div>
   </details>
 
@@ -250,6 +274,62 @@
     element("message_input").focus();
   }
 
+  // what this function does: show what the assistant currently knows about your terms
+  async function load_glossary() {
+    try {
+      const data = await (await fetch("/context")).json();
+      const lines = [];
+      for (const [term, meaning] of Object.entries(data.glossary || {})) lines.push(term + " = " + meaning);
+      for (const rule of data.rules || []) lines.push("rule: " + rule);
+      for (const note of data.notes || []) lines.push("note: " + note);
+      element("glossary_text").value = lines.join("\n");
+      element("glossary_message").textContent = data.total ? data.total + " entries in use" : "nothing set yet";
+    } catch { /* backend not up yet - leave the box alone */ }
+  }
+
+  // what this function does: send the typed glossary to the backend
+  async function save_glossary() {
+    const message = element("glossary_message");
+    message.className = "note";
+    message.textContent = "saving...";
+    try {
+      const res = await fetch("/context", {
+        method: "POST",
+        headers: headers({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ text: element("glossary_text").value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "could not save");
+      message.textContent = "saved - " + data.total + " entries now in use";
+    } catch (error) {
+      message.className = "note error";
+      message.textContent = String(error.message || error);
+    }
+  }
+
+  // what this function does: upload a glossary file instead of typing it
+  async function upload_glossary() {
+    const file = element("glossary_file").files[0];
+    const message = element("glossary_message");
+    if (!file) { message.textContent = "choose a file first"; return; }
+    message.className = "note";
+    message.textContent = "uploading...";
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/context/upload", { method: "POST", headers: headers(), body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "could not upload");
+      message.textContent = "loaded - " + data.total + " entries now in use";
+      load_glossary();
+    } catch (error) {
+      message.className = "note error";
+      message.textContent = String(error.message || error);
+    }
+  }
+
+  element("glossary_save").addEventListener("click", save_glossary);
+  element("glossary_upload").addEventListener("click", upload_glossary);
   element("login_form").addEventListener("submit", log_in);
   element("connect_form").addEventListener("submit", connect_database);
   element("upload_button").addEventListener("click", upload_document);
@@ -261,6 +341,7 @@
     element("port").value = element("database_type").value === "postgres" ? 5432 : 1433;
   });
   refresh_status();
+  load_glossary();
 </script>
 </body>
 </html>

@@ -5,12 +5,12 @@ from fastapi.responses import FileResponse, StreamingResponse
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 from api.auth import create_token, login_is_configured, require_user
-from ingestion import connect, documents, schema
+from ingestion import business_context, connect, documents, schema
 from retrieval import search
 from generation.agent import application
 import config
 
-app = FastAPI(title="AgenticRAG")
+app = FastAPI(title="Text-to-SQL Agent")
 
 # what each route expects in its request body
 class LoginRequest(BaseModel):
@@ -28,6 +28,9 @@ class ConnectRequest(BaseModel):
 class ChatRequest(BaseModel):
   message: str
   conversation_id: str = "default"
+
+class ContextRequest(BaseModel):
+  text: str
 
 # what this function does: serve the one-file chat page at the root url
 @app.get("/")
@@ -82,6 +85,22 @@ async def upload_route(file: UploadFile, user: str = Depends(require_user)):
   file_bytes = await read_within_limit(file)
   return {"uploaded": file.filename, "chunks": documents.add_document(file.filename, file_bytes)}
 
+# what this function does: show the glossary, rules and notes currently in force
+@app.get("/context")
+def get_context_route():
+  return business_context.summary()
+
+# what this function does: replace the glossary from a block of plain text
+@app.post("/context")
+def set_context_route(request: ContextRequest, user: str = Depends(require_user)):
+  return business_context.replace(*business_context.parse_text(request.text))
+
+# what this function does: replace the glossary from an uploaded text file
+@app.post("/context/upload")
+async def upload_context_route(file: UploadFile, user: str = Depends(require_user)):
+  text = (await read_within_limit(file)).decode("utf-8", errors="ignore")
+  return business_context.replace(*business_context.parse_text(text))
+
 # what this function does: report what is connected and what has been loaded so far
 @app.get("/status")
 def status_route():
@@ -89,4 +108,5 @@ def status_route():
           "connected": connect.active_engine is not None,
           "database": connect.active_database_name,
           "tables": len(schema.tables),
-          "document_chunks": len(search.document_chunks)}
+          "document_chunks": len(search.document_chunks),
+          "context_entries": business_context.summary()["total"]}
