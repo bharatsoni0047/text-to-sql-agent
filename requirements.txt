@@ -1,29 +1,33 @@
+# api
 fastapi
-uvicorn
-streamlit
+uvicorn[standard]
+python-multipart
+python-jose[cryptography]
+pydantic
 
+# langchain / langgraph
+langchain-core
+langchain-openai
+langchain-huggingface
+langchain-chroma
+langchain-text-splitters
 langgraph
-langchain
-langchain-community
 
-chromadb
-
-sentence-transformers
-
-ollama
-
-pymupdf
-pandas
-pytesseract
-pillow
-
+# database
 sqlalchemy
 psycopg2-binary
+pyodbc
 
+# retrieval
+rank-bm25
+sentence-transformers
+flashrank
+
+# document parsing
+pypdf
+python-docx
+openpyxl
+
+# utilities
 python-dotenv
-
-
-python-jose
-passlib[bcrypt]
-
-pymysql
+tenacity

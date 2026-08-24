@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!-- frontend/chat.html - the whole UI in one file: log in, connect, upload, chat with streaming -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgenticRAG</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: system-ui, sans-serif; background: #f3f4f6; color: #1f2937;
+      max-width: 780px; margin: 0 auto; padding: 16px;
+      display: flex; flex-direction: column; height: 100vh;
+    }
+    header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+    header h1 { font-size: 20px; }
+    #status_text { font-size: 13px; color: #6b7280; }
+    #status_text.connected { color: #059669; }
+    details {
+      background: white; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 10px 14px; margin-bottom: 8px; font-size: 14px;
+    }
+    summary { cursor: pointer; font-weight: 600; }
+    form, .panel_row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+    input, select, button {
+      font: inherit; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+    }
+    button { background: #2563eb; color: white; border: none; cursor: pointer; }
+    button:disabled { background: #93c5fd; cursor: wait; }
+    .note { font-size: 13px; color: #6b7280; width: 100%; }
+    .note.error { color: #dc2626; }
+    #chat_area {
+      flex: 1; overflow-y: auto; background: white; border: 1px solid #e5e7eb;
+      border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .bubble { max-width: 85%; padding: 9px 13px; border-radius: 12px; white-space: pre-wrap; line-height: 1.45; }
+    .bubble.user { align-self: flex-end; background: #2563eb; color: white; }
+    .bubble.assistant { align-self: flex-start; background: #f3f4f6; }
+    footer { display: flex; gap: 8px; margin-top: 10px; }
+    #message_input { flex: 1; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AgenticRAG</h1>
+    <span id="status_text">checking...</span>
+  </header>
+
+  <details id="login_panel" open>
+    <summary>Log in</summary>
+    <form id="login_form">
+      <input id="login_username" placeholder="username" required>
+      <input id="login_password" placeholder="password" type="password" required>
+      <button id="login_button">Log in</button>
+      <span class="note" id="login_message"></span>
+    </form>
+  </details>
+
+  <details id="connect_panel">
+    <summary>Connect to a database</summary>
+    <form id="connect_form">
+      <select id="database_type">
+        <option value="postgres">Postgres</option>
+        <option value="sqlserver">SQL Server</option>
+      </select>
+      <input id="host" placeholder="host" value="localhost" required>
+      <input id="port" placeholder="port" value="5432" required size="6">
+      <input id="database" placeholder="database name" required>
+      <input id="username" placeholder="username" required>
+      <input id="password" placeholder="password" type="password">
+      <button id="connect_button">Connect</button>
+      <span class="note" id="connect_message"></span>
+    </form>
+  </details>
+
+  <details>
+    <summary>Upload a document (PDF, DOCX, XLSX, TXT)</summary>
+    <div class="panel_row">
+      <input type="file" id="file_input" accept=".pdf,.docx,.xlsx,.xlsm,.txt">
+      <button id="upload_button">Upload</button>
+      <span class="note" id="upload_message"></span>
+    </div>
+  </details>
+
+  <main id="chat_area"></main>
+
+  <footer>
+    <input id="message_input" placeholder="Ask a question about your data or documents..." autofocus>
+    <button id="send_button">Send</button>
+  </footer>
+
+<script>
+  // one conversation per page load - refresh the page to start a fresh chat
+  const conversation_id = "web-" + Date.now();
+  // the token from /login, kept in memory only - never written to browser storage
+  let access_token = "";
+
+  // what this function does: shorthand for document.getElementById
+  function element(id) { return document.getElementById(id); }
+
+  // what this function does: build the headers for a call, adding the token once we have one
+  function headers(extra) {
+    const result = Object.assign({}, extra || {});
+    if (access_token) result["Authorization"] = "Bearer " + access_token;
+    return result;
+  }
+
+  // what this function does: ask the backend what is connected and show it in the header
+  async function refresh_status() {
+    try {
+      const status = await (await fetch("/status")).json();
+      // login switched off on the server means every route is open - hide the panel
+      if (!status.login_required) { element("login_panel").style.display = "none"; }
+      if (status.connected) {
+        element("status_text").textContent =
+          "connected to " + status.database + " - " + status.tables + " tables, " +
+          status.document_chunks + " document chunks";
+        element("status_text").className = "connected";
+        element("connect_panel").open = false;
+      } else {
+        element("status_text").textContent = "not connected";
+        element("status_text").className = "";
+      }
+    } catch { element("status_text").textContent = "backend not reachable"; }
+  }
+
+  // what this function does: exchange the username and password for a token
+  async function log_in(event) {
+    event.preventDefault();
+    const message = element("login_message");
+    message.className = "note";
+    message.textContent = "logging in...";
+    try {
+      const response = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: element("login_username").value,
+          password: element("login_password").value,
+        }),
+      });
+      const reply = await response.json();
+      if (!response.ok) { throw new Error(reply.detail || "login failed"); }
+      access_token = reply.access_token;
+      message.textContent = "logged in";
+      element("login_panel").open = false;
+      element("connect_panel").open = true;
+    } catch (error) {
+      message.className = "note error";
+      message.textContent = String(error.message || error);
+    }
+  }
+
+  // what this function does: send the connect form to the backend and report the result
+  async function connect_database(event) {
+    event.preventDefault();
+    const message = element("connect_message");
+    element("connect_button").disabled = true;
+    message.className = "note";
+    message.textContent = "connecting (first time also reads the schema, please wait)...";
+    try {
+      const response = await fetch("/connect", {
+        method: "POST",
+        headers: headers({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          database_type: element("database_type").value,
+          host: element("host").value,
+          port: Number(element("port").value),
+          database: element("database").value,
+          username: element("username").value,
+          password: element("password").value,
+        }),
+      });
+      const reply = await response.json();
+      if (reply.connected) {
+        message.textContent = "connected - " + reply.tables + " tables found";
+      } else {
+        message.className = "note error";
+        message.textContent = reply.error || reply.detail || "could not connect";
+      }
+    } catch (error) {
+      message.className = "note error";
+      message.textContent = "request failed: " + error;
+    }
+    element("connect_button").disabled = false;
+    refresh_status();
+  }
+
+  // what this function does: upload the chosen file and report how many chunks were indexed
+  async function upload_document() {
+    const file = element("file_input").files[0];
+    const message = element("upload_message");
+    if (!file) { message.textContent = "choose a file first"; return; }
+    element("upload_button").disabled = true;
+    message.className = "note";
+    message.textContent = "uploading...";
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const reply = await (await fetch("/upload", { method: "POST", headers: headers(), body })).json();
+      if (reply.detail) { throw new Error(reply.detail); }
+      message.textContent = reply.uploaded + " indexed as " + reply.chunks + " chunks";
+    } catch (error) {
+      message.className = "note error";
+      message.textContent = "upload failed: " + (error.message || error);
+    }
+    element("upload_button").disabled = false;
+    refresh_status();
+  }
+
+  // what this function does: add one chat bubble to the page and return it
+  function add_bubble(role, text) {
+    const bubble = document.createElement("div");
+    bubble.className = "bubble " + role;
+    bubble.textContent = text;
+    element("chat_area").appendChild(bubble);
+    element("chat_area").scrollTop = element("chat_area").scrollHeight;
+    return bubble;
+  }
+
+  // what this function does: send the question and stream the answer into a bubble word by word
+  async function send_message() {
+    const question = element("message_input").value.trim();
+    if (!question) return;
+    element("message_input").value = "";
+    element("send_button").disabled = true;
+    add_bubble("user", question);
+    const bubble = add_bubble("assistant", "...");
+    try {
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: headers({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ message: question, conversation_id }),
+      });
+      if (response.status === 401) { throw new Error("log in first"); }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      bubble.textContent = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        bubble.textContent += decoder.decode(value, { stream: true });
+        element("chat_area").scrollTop = element("chat_area").scrollHeight;
+      }
+      if (!bubble.textContent) bubble.textContent = "(no answer - is a database connected?)";
+    } catch (error) {
+      bubble.textContent = "request failed: " + (error.message || error);
+    }
+    element("send_button").disabled = false;
+    element("message_input").focus();
+  }
+
+  element("login_form").addEventListener("submit", log_in);
+  element("connect_form").addEventListener("submit", connect_database);
+  element("upload_button").addEventListener("click", upload_document);
+  element("send_button").addEventListener("click", send_message);
+  element("message_input").addEventListener("keydown",
+    (event) => { if (event.key === "Enter") send_message(); });
+  // sql server uses port 1433 by default - fill it in when the type changes
+  element("database_type").addEventListener("change", () => {
+    element("port").value = element("database_type").value === "postgres" ? 5432 : 1433;
+  });
+  refresh_status();
+</script>
+</body>
+</html>

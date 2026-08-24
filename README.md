@@ -1,76 +1,132 @@
-# AgenticRAG – Secure Enterprise Multi-Modal AI Assistant
+# AgenticRAG
 
-## Project Title
-**AgenticRAG**  
-(GenAI-Secure-Agentic-GenAI-Knowledge-System)
+A read-only chat assistant over your own database **and** your own documents.
 
-A secure, agent-based Generative AI system that lets non-technical users ask natural language questions to get answers from both your company database **and** all your documents — without writing any SQL or searching files manually.
+Ask a question in plain English. A LangGraph agent decides for itself whether the
+answer lives in the database or in an uploaded file, writes a `SELECT` if it needs
+one, and replies in plain English — streamed word by word.
 
-## Description
-AgenticRAG is an enterprise-ready AI assistant that combines:
+Under 500 lines of Python, and every file is small enough to read in one sitting.
 
-- **Natural Language to SQL** → Ask business questions in plain English, get accurate answers from your MySQL database  
-- **Multi-Modal RAG** → Ask questions about PDFs (policies, reports), Excel sheets (financials, KPIs), scanned images (invoices, forms), and text files — the system understands and retrieves relevant content automatically  
-- **Agentic Architecture** → Smart agents decide whether the question needs database access, document search, or general reasoning  
-- **Secure Access** → Protected by JWT authentication so only authorized people can ask questions  
+```
+POST /chat  {"message": "which 5 customers spent the most last year?"}
 
-You talk to it like a very smart colleague who already read all your documents and has full access to the company database.
+  agent -> get_business_context   (glossary + rules it must follow)
+        -> get_schema             (hybrid search picks the right tables)
+        -> run_sql                (one SELECT, checked before it runs)
+        -> answer, streamed back
+```
 
-## Tech Stack (High-Level)
-- Backend: FastAPI  
-- User Interface: Streamlit (simple chat-like experience)  
-- Agents & Logic: Agentic workflow (router + SQL agent + RAG agent + safety checks)  
-- Database: MySQL (easy to connect your own)  
-- Document Understanding: PDF, Excel, OCR (for images/scanned docs), vector embeddings  
-- Authentication: JWT tokens  
-- Designed to be modular and configurable via environment settings  
+## What it does
 
-## How It Gives Value to Your Organization
+| | |
+|---|---|
+| **Text to SQL** | Ask in English, get an answer from Postgres or SQL Server. Only `SELECT` ever runs. |
+| **Document Q&A** | Upload PDF, DOCX, XLSX or TXT files and ask about them. Answers name the file they came from. |
+| **Hybrid retrieval** | BM25 keyword search + vector similarity, fused with RRF, then reranked by a cross-encoder. |
+| **Agentic routing** | No keyword rules. The model picks its own tools and can retry when a query fails. |
+| **Login** | JWT. `/connect`, `/chat` and `/upload` all require a valid token. |
+| **Memory** | Each conversation id keeps its own history, so follow-up questions work. |
 
-| Value Delivered                              | Real-World Benefit                                                                 |
-|----------------------------------------------|-------------------------------------------------------------------------------------|
-| Non-technical users get fast answers         | Managers, HR, finance, sales teams no longer wait for analysts or IT               |
-| Single place for database + documents        | No more switching between Excel, PDFs, shared drives, and BI tools                 |
-| Reduces dependency on developers/analysts    | Ad-hoc questions answered in seconds instead of hours/days                         |
-| Safer data access                            | Controlled via login — no direct database or file access given to end users        |
-| Handles multi-modal content                  | Can read scanned invoices, whiteboards, handwritten notes, charts in PDFs         |
-| Audit-friendly & explainable                 | Shows reasoning, generated SQL (if enabled), and document sources                  |
-| Scales to enterprise needs                   | JWT + modular agents → easy to add roles, more databases, conversation memory     |
+## Quickstart
 
-In short:  
-It turns your scattered company knowledge (database + documents) into one natural-language interface that anyone in the organization can use securely and productively.
+```bash
+git clone https://github.com/bharatsoni0047/GenAI-Secure-Agentic-GenAI-Knowledge-System.git
+cd GenAI-Secure-Agentic-GenAI-Knowledge-System
 
-## Usages – What People Actually Ask It
+python -m venv .venv
+.venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
 
-**Database / Business Analytics Questions**  
-- Who are our top 10 highest-paid employees this year?  
-- What is average salary by department in last 12 months?  
-- Show total sales per product category for Q1–Q3  
-- Compare revenue this year vs last year same period  
+cp .env.example .env              # then fill in the values (see below)
 
-**Document & Policy Questions**  
-- What is our current remote work policy?  
-- Summarize the key points from the latest board report  
-- What are the rules for maternity leave?  
-- Explain our leave encashment policy in simple words  
+uvicorn api.main:app --reload
+```
 
-**Excel & Financial Data Questions**  
-- What was total marketing spend in FY 2024–25?  
-- Show me travel expenses breakdown for last quarter  
-- How many new clients did we onboard in 2025?  
+Open <http://127.0.0.1:8000> for the chat page, or `/docs` for the API.
 
-**Scanned / Image-Based Questions**  
-- How much GST is charged on this invoice?  
-- What is the due date on this scanned bill?  
-- Extract vendor name and amount from this receipt image  
+### Filling in `.env`
 
-**Mixed / Smart Questions**  
-- Which departments have average salary above 8 lakhs? And what does HR policy say about salary bands?  
-- Summarize Q3 performance and compare revenue numbers with last year  
+```
+OPENAI_API_KEY=your-key
+JWT_SECRET=a-long-random-string
+APP_USERNAME=admin
+APP_PASSWORD=pick-something-strong
+```
 
-Just type normal questions — the system automatically decides whether to look in the database, search documents, or combine both.
+Generate a secret with:
 
-Perfect for:  
-Finance teams • HR • Operations • Management • Anyone tired of digging through files and asking IT for reports.
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
 
-Secure. Fast. Useful. Every day.
+Leaving all three login values **empty** turns login off entirely — fine for local
+testing, never for anything reachable from outside your machine.
+
+Database credentials are **not** in `.env`. They are sent to `/connect` at runtime
+and held in memory only, so they are never written to disk.
+
+## Docker
+
+```bash
+docker build -t agenticrag .
+docker run -p 8000:8000 --env-file .env agenticrag
+```
+
+## API
+
+| Route | Auth | What it does |
+|---|---|---|
+| `POST /login` | — | Username + password in, token out |
+| `POST /connect` | token | Connect a database and index its schema |
+| `POST /chat` | token | Ask a question, answer streams back as plain text |
+| `POST /upload` | token | Add a PDF / DOCX / XLSX / TXT file to the document index |
+| `GET /status` | — | What is connected and how much is indexed |
+| `GET /` | — | The chat page |
+
+## How it is put together
+
+```
+config.py                      every setting in one place
+api/
+  main.py                      the routes
+  auth.py                      password login + the token check
+ingestion/
+  connect.py                   Postgres / SQL Server, in memory only
+  schema.py                    reads tables and columns
+  documents.py                 PDF, DOCX, XLSX, TXT -> chunks
+  business_context.py          glossary, rules and notes the model must follow
+retrieval/
+  search.py                    BM25 + vectors + RRF + reranker
+generation/
+  agent.py                     the LangGraph loop
+  tools.py                     the five tools the model can call
+  sql.py                       the read-only guard and the query runner
+  prompts.py                   the system prompt
+frontend/chat.html             the whole UI in one file
+```
+
+### The safety guard
+
+`generation/sql.py` is the one file worth reading twice. Every query the model
+writes goes through `is_safe()` before it touches the database:
+
+- must start with `SELECT` or `WITH`
+- one statement only — a second `;` is rejected
+- any of `INSERT UPDATE DELETE DROP ALTER CREATE TRUNCATE GRANT REVOKE EXEC MERGE INTO WAITFOR` fails it
+
+This is code, not a prompt instruction, so the model cannot talk its way past it.
+
+## Built with
+
+Python 3.11 · FastAPI · LangGraph · LangChain · Chroma · BGE embeddings ·
+flashrank · rank-bm25 · SQLAlchemy
+
+## Known limits
+
+Honest list, so nothing here surprises you:
+
+- The vector stores are in memory — uploaded documents are lost when the server restarts.
+- `/chat` is synchronous, so one long answer holds up other requests. Fine for a demo or a small team, not for many users at once.
+- The BM25 index is rebuilt on every search. Fast for hundreds of chunks, slow for tens of thousands.
+- Login is a single user from `.env`. There are no roles and no user database.

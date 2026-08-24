@@ -1,0 +1,12 @@
+# secrets - never commit these
+.env
+
+# the reranker model files, downloaded automatically on first run (~5 MB)
+models/
+
+# vector store and python leftovers
+chroma_db/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
